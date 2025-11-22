@@ -1,0 +1,13 @@
+﻿This is a test document for the Document Management System.
+
+The document contains information about artificial intelligence and machine learning.
+AI systems can process large amounts of data and learn patterns from them.
+Machine learning models are trained on datasets to make predictions.
+
+Deep learning is a subset of machine learning that uses neural networks.
+Natural language processing enables computers to understand human language.
+Computer vision allows machines to interpret and understand visual information.
+
+This document demonstrates the document upload and processing capabilities of the system.
+
+

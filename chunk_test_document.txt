@@ -1,0 +1,15 @@
+﻿This is a comprehensive test document for verifying chunk creation functionality.
+
+The document management system processes documents by breaking them into smaller chunks.
+Each chunk is then converted into a vector embedding using artificial intelligence.
+These embeddings enable semantic search capabilities across all documents.
+
+Machine learning models analyze the content and create numerical representations.
+Natural language processing helps understand the meaning behind the text.
+Vector databases store these embeddings for fast similarity searches.
+
+The system can handle various document types including PDFs, Word documents, and text files.
+Chunking strategies ensure optimal processing of large documents.
+Embedding generation creates high-dimensional vectors that capture semantic meaning.
+
+This test verifies that chunks are properly created and stored in the database.

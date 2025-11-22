@@ -1,0 +1,70 @@
+.document-list {
+  margin-top: 20px;
+}
+
+.no-documents {
+  text-align: center;
+  color: #999;
+  padding: 40px 20px;
+  font-style: italic;
+}
+
+.document-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  transition: all 0.3s;
+}
+
+.document-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #ddd;
+}
+
+.document-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.document-icon {
+  font-size: 2rem;
+}
+
+.document-details h4 {
+  margin: 0 0 5px 0;
+  color: #333;
+  font-size: 1rem;
+}
+
+.document-meta {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.document-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-download {
+  background-color: #4caf50;
+}
+
+.btn-download:hover {
+  background-color: #45a049;
+}
+
+.btn-delete {
+  background-color: #f44336;
+}
+
+.btn-delete:hover {
+  background-color: #da190b;
+}
+

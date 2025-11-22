@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: document-service
+  
+  datasource:
+    url: jdbc:postgresql://documentrds.cts66ysyadeg.us-east-1.rds.amazonaws.com:5432/document_management?ssl=true&sslmode=require&connectTimeout=30&socketTimeout=30
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+      connection-test-query: SELECT 1
+      initialization-fail-timeout: 1
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+    open-in-view: false
+  
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+server:
+  port: 8080
+
+# AWS Configuration
+aws:
+  region: ap-south-1
+  access-key-id: <your-access-key-id>
+  secret-access-key: <your-secret-access-key>
+  s3:
+    bucket-name: document-service-files-regular
+  dynamodb:
+    table-name: DocumentMetadata
+  bedrock:
+    embedding-model-id: amazon.titan-embed-text-v2:0
+    llm-model-id: amazon.titan-text-lite-v1
+
+# JWT Configuration
+jwt:
+  secret: your-secret-key-change-this-in-production-at-least-256-bits-long
+  expiration: 86400000  # 24 hours in milliseconds
+
+# CORS Configuration
+cors:
+  allowed-origins: http://localhost:3000,http://localhost,http://localhost:8080
+
+# Logging
+logging:
+  level:
+    com.docmanagement: DEBUG
+    org.springframework.security: DEBUG
+
