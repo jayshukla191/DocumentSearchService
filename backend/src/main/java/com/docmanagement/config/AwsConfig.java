@@ -3,54 +3,71 @@ package com.docmanagement.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import org.springframework.context.annotation.Profile;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.s3.S3Client;
 
+/**
+ * AWS SDK configuration.
+ * 
+ * When running on AWS (ECS/EC2), this uses the default credentials provider chain
+ * which automatically picks up IAM role credentials.
+ * 
+ * For local development, ensure AWS credentials are configured via:
+ * - Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+ * - AWS credentials file (~/.aws/credentials)
+ * - Or other methods supported by DefaultCredentialsProvider
+ */
 @Configuration
 public class AwsConfig {
     
     @Value("${aws.region}")
     private String region;
     
-    @Value("${aws.access-key-id}")
-    private String accessKeyId;
+    @Value("${aws.bedrock.region:us-east-1}")
+    private String bedrockRegion;
     
-    @Value("${aws.secret-access-key}")
-    private String secretAccessKey;
+    /**
+     * Uses the default credentials provider chain.
+     * This automatically detects credentials from:
+     * 1. Environment variables
+     * 2. System properties
+     * 3. Web identity token (for ECS/EKS)
+     * 4. IAM role for ECS tasks
+     * 5. IAM role for EC2 instances
+     * 6. Default credentials file
+     */
+    @Bean
+    public AwsCredentialsProvider awsCredentialsProvider() {
+        return DefaultCredentialsProvider.create();
+    }
     
     @Bean
-    public S3Client s3Client() {
-        AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKeyId, secretAccessKey);
-        // S3 Express One Zone buckets are automatically detected by the SDK
-        // The SDK will use the correct endpoint based on the bucket name pattern
+    public S3Client s3Client(AwsCredentialsProvider credentialsProvider) {
         return S3Client.builder()
                 .region(Region.of(region))
-                .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
-                // Force path-style addressing for S3 Express compatibility
-                .forcePathStyle(false) // S3 Express uses virtual-hosted style
+                .credentialsProvider(credentialsProvider)
                 .build();
     }
     
     @Bean
-    public DynamoDbClient dynamoDbClient() {
-        AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKeyId, secretAccessKey);
+    public DynamoDbClient dynamoDbClient(AwsCredentialsProvider credentialsProvider) {
         return DynamoDbClient.builder()
                 .region(Region.of(region))
-                .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+                .credentialsProvider(credentialsProvider)
                 .build();
     }
     
     @Bean
-    public BedrockRuntimeClient bedrockRuntimeClient() {
-        AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKeyId, secretAccessKey);
+    public BedrockRuntimeClient bedrockRuntimeClient(AwsCredentialsProvider credentialsProvider) {
+        // Bedrock may be in a different region (e.g., us-east-1 for full model availability)
         return BedrockRuntimeClient.builder()
-                .region(Region.of(region))
-                .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+                .region(Region.of(bedrockRegion))
+                .credentialsProvider(credentialsProvider)
                 .build();
     }
 }
-
