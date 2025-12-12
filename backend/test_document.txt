@@ -11,3 +11,9 @@ Computer vision allows machines to interpret and understand visual information.
 This document demonstrates the document upload and processing capabilities of the system.
 
 
+
+
+
+
+
+

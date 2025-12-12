@@ -1,0 +1,84 @@
+# AWS CodeBuild specification for Document Service
+# This file is used if you prefer AWS CodePipeline over GitHub Actions
+
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: "ap-south-1"
+    ECR_REPOSITORY: "document-service-backend"
+  secrets-manager:
+    DOCKER_USER: "${SECRET_ARN}:docker_user"
+    DOCKER_PASS: "${SECRET_ARN}:docker_password"
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto17
+      nodejs: 18
+    commands:
+      - echo Installing dependencies...
+
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+
+  build:
+    commands:
+      - echo Build started on `date`
+      
+      # Build backend
+      - echo Building backend...
+      - cd backend
+      - mvn clean package -DskipTests -B
+      
+      # Build Docker image
+      - echo Building Docker image...
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+      - cd ..
+      
+      # Build frontend
+      - echo Building frontend...
+      - cd frontend
+      - npm ci
+      - npm run build
+      - cd ..
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      
+      # Push Docker image
+      - echo Pushing Docker image...
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      
+      # Create imagedefinitions.json for ECS deployment
+      - echo Writing image definitions file...
+      - printf '[{"name":"document-service-container","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      
+      # Deploy frontend to S3
+      - echo Deploying frontend to S3...
+      - aws s3 sync frontend/build/ s3://$FRONTEND_BUCKET/ --delete
+      
+      # Invalidate CloudFront cache
+      - echo Invalidating CloudFront cache...
+      - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+
+artifacts:
+  files:
+    - imagedefinitions.json
+    - appspec.yml
+  discard-paths: yes
+
+cache:
+  paths:
+    - '/root/.m2/**/*'
+    - 'frontend/node_modules/**/*'
+
+

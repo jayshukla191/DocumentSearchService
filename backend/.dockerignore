@@ -1,0 +1,36 @@
+# Build artifacts
+target/
+!target/*.jar
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+logs/
+
+# Test files
+test_*.txt
+test_*.json
+
+# Local configuration
+application-local.yml
+
+# pgvector source (not needed in container)
+pgvector*/
+
+# Downloaded files
+downloaded_file.txt
+
+# Other
+*.md
+*.sql
+*.zip
+
+
