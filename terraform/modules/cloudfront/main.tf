@@ -9,6 +9,29 @@ resource "aws_cloudfront_origin_access_control" "s3" {
   signing_protocol                  = "sigv4"
 }
 
+# CloudFront Function to handle SPA routing for frontend only
+resource "aws_cloudfront_function" "spa_routing" {
+  name    = "${var.name_prefix}-spa-routing"
+  runtime = "cloudfront-js-2.0"
+  comment = "Handle SPA routing for frontend - rewrite non-file requests to index.html"
+  publish = true
+  code    = <<-EOF
+    function handler(event) {
+      var request = event.request;
+      var uri = request.uri;
+      
+      // If the request is for a file (has extension), don't rewrite
+      if (uri.includes('.')) {
+        return request;
+      }
+      
+      // For SPA routes (no extension), serve index.html
+      request.uri = '/index.html';
+      return request;
+    }
+  EOF
+}
+
 # CloudFront Distribution
 resource "aws_cloudfront_distribution" "main" {
   enabled             = true
@@ -37,7 +60,7 @@ resource "aws_cloudfront_distribution" "main" {
     }
   }
 
-  # Default behavior - S3 frontend
+  # Default behavior - S3 frontend with SPA routing function
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
@@ -50,6 +73,12 @@ resource "aws_cloudfront_distribution" "main" {
       }
     }
 
+    # Use CloudFront Function for SPA routing instead of error responses
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.spa_routing.arn
+    }
+
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
     default_ttl            = 3600
@@ -57,7 +86,7 @@ resource "aws_cloudfront_distribution" "main" {
     compress               = true
   }
 
-  # API behavior - forward to ALB
+  # API behavior - forward to ALB (NO caching, NO error response override)
   ordered_cache_behavior {
     path_pattern     = "/api/*"
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
@@ -66,7 +95,7 @@ resource "aws_cloudfront_distribution" "main" {
 
     forwarded_values {
       query_string = true
-      headers      = ["Authorization", "Content-Type", "Accept", "Origin"]
+      headers      = ["Authorization", "Content-Type", "Accept", "Origin", "Host"]
       cookies {
         forward = "all"
       }
@@ -99,18 +128,8 @@ resource "aws_cloudfront_distribution" "main" {
     max_ttl                = 0
   }
 
-  # Custom error responses for SPA routing
-  custom_error_response {
-    error_code         = 403
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
-
-  custom_error_response {
-    error_code         = 404
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
+  # NOTE: Removed custom_error_response blocks that were breaking API responses
+  # SPA routing is now handled by the CloudFront Function above
 
   restrictions {
     geo_restriction {

@@ -62,6 +62,7 @@ module "rds" {
   vpc_id                = module.vpc.vpc_id
   private_subnet_ids    = module.vpc.private_subnet_ids
   ecs_security_group_id = module.vpc.ecs_security_group_id
+  rds_security_group_id = module.vpc.rds_security_group_id
   
   instance_class         = var.db_instance_class
   allocated_storage      = var.db_allocated_storage
