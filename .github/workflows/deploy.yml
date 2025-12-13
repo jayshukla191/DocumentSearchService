@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+      - mainline
       - develop
   pull_request:
     branches:
       - main
+      - mainline
 
 env:
   AWS_REGION: ap-south-1
@@ -136,7 +138,7 @@ jobs:
     name: Deploy to Production
     needs: docker
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/mainline'
     environment: production
     
     steps:
@@ -187,7 +189,7 @@ jobs:
 
       - name: Set environment variables
         run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/mainline" ]; then
             echo "REACT_APP_API_URL=${{ secrets.PROD_API_URL }}" >> $GITHUB_ENV
             echo "S3_BUCKET=${{ secrets.PROD_FRONTEND_BUCKET }}" >> $GITHUB_ENV
             echo "CLOUDFRONT_DISTRIBUTION=${{ secrets.PROD_CLOUDFRONT_ID }}" >> $GITHUB_ENV
